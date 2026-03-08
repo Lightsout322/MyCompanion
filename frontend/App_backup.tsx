@@ -15,10 +15,7 @@ import {
 } from 'react-native';
 import MainScreen from './app/MainScreen';
 import { Colors } from './constants/colors';
-import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { authAPI, LoginData, RegisterData } from './services/api';
-
-type AuthMode = 'login' | 'register';
 
 // Gradient View component with web fallback
 const GradientView = ({ children, style }: { children: React.ReactNode; style: any }) => {
@@ -40,10 +37,9 @@ const GradientView = ({ children, style }: { children: React.ReactNode; style: a
   );
 };
 
-// Inner App component that uses theme
-const AppContent = () => {
-  const { colors } = useTheme();
-  
+type AuthMode = 'login' | 'register';
+
+export default function App() {
   const [mode, setMode] = useState<AuthMode>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -89,20 +85,18 @@ const AppContent = () => {
   };
 
   const handleSubmit = async () => {
-    console.log('=== handleSubmit called ===');
-    console.log('Mode:', mode);
-    console.log('Is form valid:', isFormValid);
-    console.log('Is loading:', isLoading);
-    console.log('Login phone:', loginPhone);
-    console.log('Login password:', loginPassword);
-    console.log('Register name:', registerName);
-    console.log('Register phone:', registerPhone);
-    console.log('Register email:', registerEmail);
-    console.log('Register password:', registerPassword);
+    console.log('handleSubmit called', { mode, isFormValid, isLoading });
+    console.log('Form data:', {
+      loginPhone,
+      loginPassword,
+      registerName,
+      registerPhone,
+      registerEmail,
+      registerPassword
+    });
     
     if (!isFormValid || isLoading) {
       console.log('Form is invalid or loading, returning');
-      Alert.alert('Ошибка', 'Заполните все поля корректно');
       return;
     }
 
@@ -129,16 +123,16 @@ const AppContent = () => {
           phone: loginPhone.trim(),
           password: loginPassword,
         };
-        console.log('Login data:', loginData);
         const response = await authAPI.login(loginData);
         console.log('Login response:', response);
         
         if (response.success) {
-          console.log('Login successful, setting isAuthenticated to true');
-          setIsAuthenticated(true);
-          console.log('User logged in:', response.user);
-        } else {
-          Alert.alert('Ошибка', 'Неверный ответ от сервера');
+          Alert.alert('Успешно', 'Вход выполнен!', [
+            { text: 'OK', onPress: () => {
+              setIsAuthenticated(true);
+              console.log('User logged in:', response.user);
+            }},
+          ]);
         }
       } else {
         console.log('Attempting registration...');
@@ -148,14 +142,16 @@ const AppContent = () => {
           email: registerEmail.trim(),
           password: registerPassword,
         };
-        console.log('Register data:', registerData);
         const response = await authAPI.register(registerData);
         console.log('Register response:', response);
         
         if (response.success) {
-          console.log('Registration successful, setting isAuthenticated to true');
-          setIsAuthenticated(true);
-          console.log('User registered:', response.user);
+          Alert.alert('Успешно', 'Регистрация завершена!', [
+            { text: 'OK', onPress: () => {
+              setIsAuthenticated(true);
+              console.log('User registered:', response.user);
+            }},
+          ]);
         }
       }
     } catch (error: any) {
@@ -176,14 +172,14 @@ const AppContent = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'web' ? undefined : 'height'}
     >
-      <GradientView style={[styles.gradient, { backgroundColor: colors.background }]}>
+      <GradientView style={styles.gradient}>
         <StatusBar style="dark" />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.content}>
-            {/* Logo */}
+            {/* Logo placeholder */}
             <View style={styles.logoContainer}>
               <Text style={styles.logoText}>🐱</Text>
             </View>
@@ -294,14 +290,6 @@ const AppContent = () => {
         </ScrollView>
       </GradientView>
     </KeyboardAvoidingView>
-  );
-};
-
-export default function App() {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
   );
 }
 
